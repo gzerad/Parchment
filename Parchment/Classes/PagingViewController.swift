@@ -826,11 +826,18 @@ open class PagingViewController<T: PagingItem>:
     collectionView.reloadData()
   }
   
-  private func reloadItems(around pagingItem: T, keepExisting: Bool = false) {
+  open func reloadItems(around pagingItem: T, keepExisting: Bool = false) {
     var toItems = generateItems(around: pagingItem)
     
     if keepExisting {
-      toItems = visibleItems.itemsCache.union(toItems)
+        let spinnerItems = visibleItems.itemsCache.filter {
+            if let index = ($0 as? PagingIndexItem)?.index,
+                index == -1 || index == Int.max {
+                return true
+            }
+            return false
+        }
+        toItems = visibleItems.itemsCache.subtracting(spinnerItems).union(toItems)
     }
   
     let oldLayoutAttributes = collectionViewLayout.layoutAttributes
