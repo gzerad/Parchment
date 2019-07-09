@@ -871,9 +871,33 @@ open class PagingViewController<T: PagingItem>:
       offset -= options.menuItemSpacing
     }
     
-    collectionView.contentOffset = CGPoint(
-      x: oldContentOffset.x - offset,
-      y: oldContentOffset.y)
+    let shouldRestoreOffset: Bool = {
+        let filter: ((PagingItem) -> Bool) = {
+            if let index = ($0 as? PagingIndexItem)?.index,
+                index == -1 || index == Int.max {
+                return false
+            }
+            return true
+        }
+        
+        let oldItems = oldVisibleItems.items.filter(filter)
+        let newItems = visibleItems.items.filter(filter)
+        
+        guard let oldFirstItem = oldItems.first else {
+            return false
+        }
+        
+        guard let newFirstItem = newItems.first else {
+            return false
+        }
+        return oldFirstItem != newFirstItem
+    }()
+    
+    if shouldRestoreOffset {
+        collectionView.contentOffset = CGPoint(
+          x: oldContentOffset.x - offset,
+          y: oldContentOffset.y)
+    }
     
     // We need to perform layout here, if not the collection view
     // seems to get in a weird state.
